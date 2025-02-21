@@ -12,7 +12,6 @@ function Home() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Récupère l'utilisateur depuis le backend
         const fetchUser = async () => {
             try {
                 const response = await fetch("http://localhost:5000/api/user", {
@@ -138,12 +137,6 @@ function Home() {
                     {user ? `Bienvenue, ${user.name} !` : "Utilisateur inconnu"}
                 </h1>
                 <div className="flex gap-4">
-                    <button
-                        onClick={() => navigate(`/profile/`)} // Redirection dynamique avec l'ID de l'utilisateur
-                        className="bg-blue-500 text-white px-4 py-2 rounded"
-                    >
-                        Mon Profil
-                    </button>
                     <button
                         onClick={handleLogout}
                         className="bg-red-500 text-white px-4 py-2 rounded"

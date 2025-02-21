@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import PostCard from "./PostCard"; // Assurez-vous du bon chemin
+import PostCard from "./PostCard";
 
 // Définition du type pour un Post
 interface Post {
-    id: number;
     title: string;
     img: string;
     createdAt: string;
-    author: { name: string }; // L’auteur est optionnel (si la relation ne fonctionne pas)
+    author: { name: string, id: number };
 }
 
-const PostList: React.FC = () => {
-    const [posts, setPosts] = useState<Post[]>([]);
+// Définition des props de PostList
+interface PostListProps {
+    posts?: Post[]; // La liste des posts peut être fournie en prop (optionnelle)
+}
+
+const PostList: React.FC<PostListProps> = ({ posts: propPosts }) => {
+    const [posts, setPosts] = useState<Post[]>(propPosts || []);
 
     useEffect(() => {
+        // Si des posts sont déjà fournis en prop, ne pas les recharger
+        if (propPosts && propPosts.length > 0) return;
+
         const fetchPosts = async () => {
             try {
                 const response = await axios.get("http://localhost:5000/api/posts");
@@ -25,7 +32,7 @@ const PostList: React.FC = () => {
         };
 
         fetchPosts();
-    }, []);
+    }, [propPosts]);
 
     return (
         <div className="max-w-lg mx-auto">
@@ -34,11 +41,11 @@ const PostList: React.FC = () => {
             ) : (
                 posts.map((post) => (
                     <PostCard
-                        key={post.id}
-                        username={post.author?.name} // Récupérer le nom de l’auteur
-                        content={post.title} // Récupérer le titre du post
+                        key={post.author.id}
+                        username={post.author.name}
+                        content={post.title}
                         createdAt={post.createdAt}
-                        img={post.img} // Image Base64
+                        img={post.img}
                     />
                 ))
             )}
