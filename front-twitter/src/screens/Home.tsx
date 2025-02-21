@@ -9,6 +9,7 @@ function Home() {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [user, setUser] = useState<{ id: string; name: string } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState<string>(""); // État pour la recherche
     const navigate = useNavigate();
 
     // Déplace fetchPosts en dehors de useEffect
@@ -116,6 +117,12 @@ function Home() {
         }
     };
 
+    // Filtrage des posts en fonction de la recherche (titre ou nom de l'auteur)
+    const filteredPosts = posts.filter((post) =>
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) || // Recherche par titre
+        post.author.name.toLowerCase().includes(searchQuery.toLowerCase()) // Recherche par nom de l'auteur
+    );
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-100 p-4 flex justify-center items-center">
@@ -160,7 +167,19 @@ function Home() {
 
             <div className="max-w-4xl mx-auto">
                 <h2 className="text-2xl font-semibold text-indigo-600 mb-4">Liste des posts</h2>
-                <PostList posts={posts} setPosts={setPosts} />
+
+                {/* Barre de recherche */}
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        placeholder="Rechercher par titre ou nom d'auteur"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg"
+                    />
+                </div>
+
+                <PostList posts={filteredPosts} setPosts={setPosts} />
             </div>
         </div>
     );
