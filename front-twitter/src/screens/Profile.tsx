@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import {useParams, useNavigate} from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PostList from "../components/PostList";
-
 
 function UserProfile() {
     const { id } = useParams();  // Récupère l'ID de l'utilisateur depuis l'URL
@@ -45,11 +44,6 @@ function UserProfile() {
         fetchPosts();
     }, [id]); // On relance l'effet quand l'ID change
 
-    // Si l'utilisateur n'est pas trouvé, on redirige vers la page d'accueil
-    if (notFound) {
-
-    }
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600">
             <div className="container mx-auto px-4 py-8">
@@ -64,8 +58,10 @@ function UserProfile() {
                 {/* Titre des publications */}
                 <h3 className="text-xl font-semibold text-white mb-6">Publications</h3>
 
-                {/* Affichage des posts ou un message de chargement */}
-                {loading ? (
+                {/* Si l'utilisateur n'a pas de posts, on affiche un message */}
+                {notFound ? (
+                    <p className="text-white">Aucun utilisateur trouvé ou pas de publications disponibles.</p>
+                ) : loading ? (
                     <p className="text-white">Chargement des publications...</p>
                 ) : (
                     <PostList posts={posts} />
