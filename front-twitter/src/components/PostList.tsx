@@ -1,39 +1,26 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React from "react";
 import PostCard from "./PostCard";
 
-// Définition du type pour un Post
 interface Post {
+    id: number;
     title: string;
     img: string;
     createdAt: string;
     author: { name: string, id: number };
+    userId: number;
 }
 
-// Définition des props de PostList
 interface PostListProps {
-    posts?: Post[]; // La liste des posts peut être fournie en prop (optionnelle)
+    posts: Post[];
+    setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
 }
 
-const PostList: React.FC<PostListProps> = ({ posts: propPosts }) => {
-    const [posts, setPosts] = useState<Post[]>(propPosts || []);
+const formatDate = (date: string) => {
+    const now = new Date(date);
+    return `le ${("0" + now.getDate()).slice(-2)}/${("0" + (now.getMonth() + 1)).slice(-2)}/${now.getFullYear()} à ${("0" + now.getHours()).slice(-2)}:${("0" + now.getMinutes()).slice(-2)}`;
+};
 
-    useEffect(() => {
-        // Si des posts sont déjà fournis en prop, ne pas les recharger
-        if (propPosts && propPosts.length > 0) return;
-
-        const fetchPosts = async () => {
-            try {
-                const response = await axios.get("http://localhost:5000/api/posts");
-                setPosts(response.data);
-            } catch (error) {
-                console.error("Erreur lors du chargement des posts :", error);
-            }
-        };
-
-        fetchPosts();
-    }, [propPosts]);
-
+const PostList: React.FC<PostListProps> = ({ posts }) => {
     return (
         <div className="max-w-lg mx-auto">
             {posts.length === 0 ? (
@@ -41,11 +28,12 @@ const PostList: React.FC<PostListProps> = ({ posts: propPosts }) => {
             ) : (
                 posts.map((post) => (
                     <PostCard
-                        key={post.author.id}
+                        key={post.id}
                         username={post.author.name}
                         content={post.title}
-                        createdAt={post.createdAt}
+                        createdAt={formatDate(post.createdAt)}
                         img={post.img}
+                        userId={post.userId}
                     />
                 ))
             )}

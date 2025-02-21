@@ -17,12 +17,18 @@ router.put('/users', authMiddleware, userController.updateUser); // Modifier son
 router.delete('/users', authMiddleware, userController.deleteUser); // Supprimer son compte
 
 
-router.get('/posts', postController.getAllPosts); // Récupérer tous les posts
-router.get('/posts/:id', postController.getPost); // Récupérer un post par ID
+router.get('/posts',authMiddleware, postController.getAllPosts); // Récupérer tous les posts
+router.get('/posts/:id',authMiddleware, postController.getPost); // Récupérer un post par ID
 router.post("/posts", authMiddleware, upload.single("img"), postController.createPost);
 router.delete('/posts/:id', authMiddleware, postController.deletePost); // Supprimer un post
-router.get("/user/posts", authMiddleware, postController.getCurrentUserPosts);//Récupère tout les postes d'un utilisateur
-router.get('/posts/user/:id', postController.getPostsByUserId);// Route pour récupérer les posts d'un utilisateur par son ID
+router.get('/posts/user/:id',authMiddleware, postController.getPostsByUserId);// Route pour récupérer les posts d'un utilisateur par son ID
 
+router.post('/upload',authMiddleware, upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('Aucun fichier n\'a été téléchargé.');
+    }
+    // Retourne l'URL du fichier téléchargé
+    res.send({ url: `http://localhost:5000/uploads/${req.file.filename}` });
+});
 
 module.exports = router;

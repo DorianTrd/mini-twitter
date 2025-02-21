@@ -5,6 +5,7 @@ const sequelize = require('./config/db');
 const routes = require('./routes/routes');
 const User = require('./models/user');  // Assurez-vous que le chemin est correct
 const Post = require('./models/post');  // Assurez-vous que le chemin est correct
+const path = require('path');
 
 const app = express();
 
@@ -20,9 +21,11 @@ app.use(bodyParser.json());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Routes
-app.use('/api', routes);
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+app.use('/api', require('./routes/routes'));
 
 sequelize.sync()
     .then(() => {

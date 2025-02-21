@@ -1,4 +1,3 @@
-// src/context/UserContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,6 +13,7 @@ interface UserContextType {
     register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
+    loading: boolean;  // Ajout d'un état de chargement
     followUser: (userId: number) => Promise<void>;
     unfollowUser: (userId: number) => Promise<void>;
 }
@@ -26,15 +26,38 @@ interface UserProviderProps {
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);  // Initialiser avec "true"
     const navigate = useNavigate();
 
     const isAuthenticated = !!localStorage.getItem('token');
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
+        const checkAuth = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const response = await fetch('http://localhost:5000/api/user', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
 
-        }
+                    if (response.ok) {
+                        const userData = await response.json();
+                        setUser(userData);
+                    } else {
+                        localStorage.removeItem('token');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la vérification de l\'utilisateur', error);
+                    localStorage.removeItem('token');
+                }
+            }
+            setLoading(false);  // Fin de la vérification
+        };
+
+        checkAuth();
     }, []);
 
     const login = async (email: string, password: string) => {
@@ -48,9 +71,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
         if (response.ok) {
             const data = await response.json();
-            localStorage.setItem('token', data.token); // Stocker le token
-            setUser(data.user); // Stocker l'utilisateur
-            navigate('/home'); // Redirection vers la page d'accueil
+            localStorage.setItem('token', data.token);  // Stocker le token
+            setUser(data.user);  // Stocker l'utilisateur
+            navigate('/home');  // Redirection vers la page d'accueil
         } else {
             alert('Email ou mot de passe incorrect');
         }
@@ -114,8 +137,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     };
 
     return (
-        <UserContext.Provider value={{ user, login, register, logout, isAuthenticated, followUser, unfollowUser }}>
-            {children}
+        <UserContext.Provider value={{
+            user, login, register, logout, isAuthenticated, loading, followUser, unfollowUser
+        }}>
+            {loading ? <div>Chargement...</div> : children} {/* Affiche un loading tant que l'utilisateur est vérifié */}
         </UserContext.Provider>
     );
 };
