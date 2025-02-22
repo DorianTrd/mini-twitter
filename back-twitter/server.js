@@ -2,16 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const sequelize = require('./config/db');
-const routes = require('./routes/routes');
-const User = require('./models/user');  // Assurez-vous que le chemin est correct
-const Post = require('./models/post');  // Assurez-vous que le chemin est correct
 const path = require('path');
 
 const app = express();
 
 // Configuration CORS
 app.use(cors({
-    origin: 'http://localhost:5173', // Remplace par l'URL de ton frontend
+    origin: 'http://localhost:4173', // Remplace par l'URL de ton frontend
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'] // Assurez-vous que l'en-tête Authorization est autorisé
 }));

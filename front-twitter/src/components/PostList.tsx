@@ -12,7 +12,7 @@ interface Post {
 
 interface PostListProps {
     posts: Post[];
-    setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
+    setPosts?: React.Dispatch<React.SetStateAction<Post[]>>;
 }
 
 const formatDate = (date: string) => {

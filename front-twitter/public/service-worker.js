@@ -10,7 +10,11 @@ precacheAndRoute([
 
 registerRoute(({ request }) => {
     return request.url.startsWith('http://localhost:5000') && request.method == "GET";
-}, new NetworkFirst());
+}, new NetworkFirst(
+    {
+        cacheName: 'api-cache',
+    }
+));
 
 function sendPost(postData, key) {
     return fetch('http://localhost:5000/api/posts', {
