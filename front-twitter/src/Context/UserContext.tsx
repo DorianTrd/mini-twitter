@@ -1,37 +1,44 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, {createContext, useContext, useState, useEffect, ReactNode} from 'react';
+import {useNavigate} from 'react-router-dom';
 
+// Définition de l'interface User pour décrire un utilisateur
 interface User {
     id: number;
     name: string;
     email: string;
 }
 
+// Définition des méthodes et états dans le contexte utilisateur
 interface UserContextType {
-    user: User | null;
-    login: (email: string, password: string) => Promise<void>;
-    register: (name: string, email: string, password: string) => Promise<void>;
-    logout: () => void;
-    isAuthenticated: boolean;
-    loading: boolean;  // Ajout d'un état de chargement
-    followUser: (userId: number) => Promise<void>;
-    unfollowUser: (userId: number) => Promise<void>;
+    user: User | null; // Utilisateur connecté ou null
+    login: (email: string, password: string) => Promise<void>; // Méthode pour se connecter
+    register: (name: string, email: string, password: string) => Promise<void>; // Méthode pour s'inscrire
+    logout: () => void; // Méthode pour se déconnecter
+    isAuthenticated: boolean; // Indicateur de l'authentification (basé sur la présence du token)
+    loading: boolean; // État de chargement pour vérifier l'authentification
+    followUser: (userId: number) => Promise<void>; // Méthode pour suivre un utilisateur
+    unfollowUser: (userId: number) => Promise<void>; // Méthode pour ne plus suivre un utilisateur
 }
 
+// Création du contexte utilisateur
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Définition des props pour le provider qui contiendra tous les états et méthodes
 interface UserProviderProps {
     children: ReactNode;
 }
 
-export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);  // Initialiser avec "true"
-    const navigate = useNavigate();
+// Le composant UserProvider va fournir les valeurs du contexte aux autres composants
+export const UserProvider: React.FC<UserProviderProps> = ({children}) => {
+    const [user, setUser] = useState<User | null>(null); // État de l'utilisateur connecté
+    const [loading, setLoading] = useState(true);  // Initialisation de l'état de chargement
+    const navigate = useNavigate(); // Pour la redirection après l'authentification
 
+    // Détection de l'authentification (vérifie si un token est stocké)
     const isAuthenticated = !!localStorage.getItem('token');
 
     useEffect(() => {
+        // Vérification de l'authentification dès le montage du composant
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
             if (token) {
@@ -43,6 +50,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                         },
                     });
 
+                    // Si la réponse est valide, on récupère l'utilisateur
                     if (response.ok) {
                         const userData = await response.json();
                         setUser(userData);
@@ -54,38 +62,40 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                     localStorage.removeItem('token');
                 }
             }
-            setLoading(false);  // Fin de la vérification
+            setLoading(false);  // Fin de la vérification, on change l'état de chargement
         };
 
         checkAuth();
-    }, []);
+    }, []); // Le tableau vide signifie que l'effet s'exécute une seule fois au montage
 
+    // Fonction de login
     const login = async (email: string, password: string) => {
         const response = await fetch('http://localhost:5000/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({email, password}),
         });
 
         if (response.ok) {
             const data = await response.json();
-            localStorage.setItem('token', data.token);  // Stocker le token
-            setUser(data.user);  // Stocker l'utilisateur
-            navigate('/home');  // Redirection vers la page d'accueil
+            localStorage.setItem('token', data.token);  // Sauvegarde le token dans le stockage local
+            setUser(data.user);  // Sauvegarde les données de l'utilisateur
+            navigate('/home');  // Redirige vers la page d'accueil
         } else {
             alert('Email ou mot de passe incorrect');
         }
     };
 
+    // Fonction d'inscription
     const register = async (name: string, email: string, password: string) => {
         const response = await fetch('http://localhost:5000/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name, email, password }),
+            body: JSON.stringify({name, email, password}),
         });
 
         if (response.ok) {
@@ -96,12 +106,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         }
     };
 
+    // Fonction de logout
     const logout = () => {
-        localStorage.removeItem('token');
-        setUser(null);
-        navigate('/login');
+        localStorage.removeItem('token');  // Retire le token du stockage local
+        setUser(null);  // Réinitialise l'utilisateur
+        navigate('/login');  // Redirige vers la page de login
     };
 
+    // Fonction pour suivre un utilisateur
     const followUser = async (userId: number) => {
         const response = await fetch('http://localhost:5000/api/follow', {
             method: 'POST',
@@ -109,7 +121,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
             },
-            body: JSON.stringify({ userId }),
+            body: JSON.stringify({userId}),
         });
 
         if (response.ok) {
@@ -119,6 +131,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         }
     };
 
+    // Fonction pour ne plus suivre un utilisateur
     const unfollowUser = async (userId: number) => {
         const response = await fetch('http://localhost:5000/api/unfollow', {
             method: 'DELETE',
@@ -126,7 +139,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
             },
-            body: JSON.stringify({ userId }),
+            body: JSON.stringify({userId}),
         });
 
         if (response.ok) {
@@ -140,11 +153,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         <UserContext.Provider value={{
             user, login, register, logout, isAuthenticated, loading, followUser, unfollowUser
         }}>
-            {loading ? <div>Chargement...</div> : children} {/* Affiche un loading tant que l'utilisateur est vérifié */}
+            {loading ?
+                <div>Chargement...</div> : children} {/* Affiche "Chargement..." tant que l'utilisateur n'est pas authentifié */}
         </UserContext.Provider>
     );
 };
 
+// Hook personnalisé pour accéder facilement aux valeurs du contexte
 export const useUser = (): UserContextType => {
     const context = useContext(UserContext);
     if (!context) {
