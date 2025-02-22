@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import PostList from "../components/PostList.tsx";
+import PostList, { Post } from "../components/PostList.tsx";
+import { openDB } from "idb";
+import toastr from "toastr";
+import "toastr/build/toastr.min.css";
 
 function Home() {
     const [title, setTitle] = useState("");
     const [img, setImage] = useState<File | null>(null);
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<Post[]>([]);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [user, setUser] = useState<{ id: string; name: string } | null>(null);
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState<string>(""); // État pour la recherche
+    const [searchQuery, setSearchQuery] = useState<string>("");
     const navigate = useNavigate();
 
-    // Déplace fetchPosts en dehors de useEffect
     const fetchPosts = async () => {
         try {
             const response = await fetch("http://localhost:5000/api/posts", {
                 method: "GET",
                 headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
             });
             const postsData = await response.json();
@@ -40,13 +42,13 @@ function Home() {
                 const response = await fetch("http://localhost:5000/api/user", {
                     method: "GET",
                     headers: {
-                        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
                 });
                 const userData = await response.json();
 
                 if (response.ok) {
-                    setUser(userData); // Si la réponse est correcte, on met à jour l'utilisateur
+                    setUser(userData);
                 } else {
                     console.error("Erreur lors de la récupération de l'utilisateur", userData);
                     window.location.href = "/login";
@@ -58,7 +60,22 @@ function Home() {
         };
 
         fetchUser();
-        fetchPosts(); // Appel de fetchPosts ici pour initialiser la liste des posts
+        fetchPosts();
+
+        // Ajouter un écouteur pour détecter la reconnexion à Internet
+        const handleOnline = () => {
+            toastr.success(
+                "Vous êtes à nouveau en ligne. Vos posts ont été envoyés avec succès.",
+                "Connexion restaurée"
+            );
+            window.location.reload(); // Rafraîchissement après synchronisation
+        };
+
+        window.addEventListener("online", handleOnline);
+
+        return () => {
+            window.removeEventListener("online", handleOnline);
+        };
     }, []);
 
     const handleLogout = () => {
@@ -80,6 +97,42 @@ function Home() {
         }
     };
 
+    async function saveForLater(post: { title: string; img: File; token: string | null }) {
+        const db = await openDB("offline-mini-twitter", 1, {
+            upgrade(db) {
+                if (!db.objectStoreNames.contains("posts")) {
+                    db.createObjectStore("posts", { keyPath: "id", autoIncrement: true });
+                }
+            },
+        });
+
+        await db.add("posts", post);
+        console.log("Post sauvegardé en offline ✅");
+
+        toastr.warning(
+            "Vous êtes hors ligne. Le post sera enregistré et envoyé une fois la connexion rétablie.",
+            "Hors ligne"
+        );
+
+        if ("serviceWorker" in navigator && "SyncManager" in window) {
+            const registration = await navigator.serviceWorker.ready;
+            const syncManager = (registration as any).sync;
+
+            if (syncManager) {
+                try {
+                    await syncManager.register("sync-new-posts");
+                    console.log("SyncManager enregistré pour envoyer plus tard 🔄");
+                } catch (syncError) {
+                    console.error("Échec de l'enregistrement du SyncManager", syncError);
+                }
+            } else {
+                console.warn("SyncManager non disponible, le post ne sera pas synchronisé automatiquement.");
+            }
+        } else {
+            console.warn("SyncManager non supporté par ce navigateur.");
+        }
+    }
+
     const handleCreatePost = async () => {
         if (!title || !img) {
             console.error("Le titre et l’image sont obligatoires");
@@ -94,7 +147,7 @@ function Home() {
             const response = await fetch("http://localhost:5000/api/posts", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 body: formData,
             });
@@ -102,25 +155,31 @@ function Home() {
             const postData = await response.json();
             if (response.ok) {
                 console.log("Post créé avec succès", postData);
-
-                // Rafraîchissement des posts après la création
-                fetchPosts(); // Appel de fetchPosts ici pour mettre à jour les posts
-
+                fetchPosts();
                 setTitle("");
                 setImage(null);
                 setImagePreview(null);
+                window.location.reload(); // Rafraîchissement de la page après création du post
             } else {
                 console.error("Erreur lors de la création du post", postData);
             }
         } catch (error) {
-            console.error("Erreur lors de la création du post", error);
+            console.error("Erreur lors de la création du post (peut-être hors ligne)", error);
+            saveForLater({
+                title,
+                img,
+                token: localStorage.getItem("token"),
+            });
+            setTitle("");
+            setImage(null);
+            setImagePreview(null);
         }
     };
 
-    // Filtrage des posts en fonction de la recherche (titre ou nom de l'auteur)
-    const filteredPosts = posts.filter((post) =>
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) || // Recherche par titre
-        post.author.name.toLowerCase().includes(searchQuery.toLowerCase()) // Recherche par nom de l'auteur
+    const filteredPosts = posts.filter(
+        (post) =>
+            post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            post.author?.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (loading) {
@@ -157,7 +216,9 @@ function Home() {
                     onChange={handleFileChange}
                     className="w-full p-3 border border-gray-300 rounded-lg mb-4"
                 />
-                {imagePreview && <img src={imagePreview} alt="Aperçu" className="max-w-full h-auto rounded-lg mb-4" />}
+                {imagePreview && (
+                    <img src={imagePreview} alt="Aperçu" className="max-w-full h-auto rounded-lg mb-4" />
+                )}
                 <button onClick={handleCreatePost} className="w-full py-3 bg-indigo-600 text-white rounded-lg">
                     Créer un post
                 </button>
@@ -167,18 +228,13 @@ function Home() {
 
             <div className="max-w-4xl mx-auto">
                 <h2 className="text-2xl font-semibold text-indigo-600 mb-4">Liste des posts</h2>
-
-                {/* Barre de recherche */}
-                <div className="mb-4">
-                    <input
-                        type="text"
-                        placeholder="Rechercher par titre ou nom d'auteur"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-lg"
-                    />
-                </div>
-
+                <input
+                    type="text"
+                    placeholder="Rechercher par titre ou nom d'auteur"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg"
+                />
                 <PostList posts={filteredPosts} setPosts={setPosts} />
             </div>
         </div>
