@@ -69,11 +69,10 @@ S'il y'a un quelquonque problème, merci de me contacter je repondrai au plus vi
     - Ajout d'un post en mode hors-ligne (offline-sync) ✔
     - Abonnements & Notifications "général" (je m'abonne, dès que quelqu'un ajoute un post, j'ai une notif) ✔
     - Ouverture du site lors du click sur une notif ✔
-      
-### Fonctionnalitées ensuite : 
-
-
-    - Passer les notifs en mode "follow". (Je m'abonne à des profils en particulier, je reçois une notif si l'un d'eux ajoute un post) ✔
+ 
+  ### Fonctionnalitées ensuite :
+ 
+   - Passer les notifs en mode "follow". (Je m'abonne à des profils en particulier, je reçois une notif si l'un d'eux ajoute un post) ✔
     - Affichage d'une info-bulle si on est hors-ligne ✔ (via un toastr)
     - Ajout de photo sur les posts ✔ 
     - Pouvoir prendre des photos directement via l'appli ✘
@@ -85,4 +84,8 @@ S'il y'a un quelquonque problème, merci de me contacter je repondrai au plus vi
     - Tout autre idée est la bienvenue (et sera récompensée).  
     
     - Barre de navigation au menu pour chercher un utilisateur/ post spécifique
+      
+
+
+  
     
