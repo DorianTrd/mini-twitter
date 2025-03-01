@@ -6,6 +6,7 @@ interface SearchBarProps {
     setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
+//Barre de recherche des titres et nom d'utilisateurs
 const SearchBar: React.FC<SearchBarProps> = ({searchQuery, setSearchQuery}) => {
     return (
         <div className="mb-6">

@@ -1,34 +1,45 @@
-const express = require('express');
-const router = express.Router();
-const postController = require('../controllers/postController');
-const userController = require('../controllers/userController');
-const followController = require('../controllers/userHasUserController');
-const authMiddleware = require('../middleware/authMiddleware');
-const upload = require('../middleware/upload');
+const express = require("express")
+const router = express.Router()
+const postController = require("../controllers/postController")
+const userController = require("../controllers/userController")
+const notificationController = require("../controllers/notificationController")
+const subscriptionController = require("../controllers/subscriptionController")
+const authMiddleware = require("../middleware/authMiddleware")
+const upload = require("../middleware/upload")
 
-router.post('/register', userController.register); // Inscription
-router.post('/login', userController.login); // Connexion
+router.post("/register", userController.register) // Inscription
+router.post("/login", userController.login) // Connexion
 
-router.get('/user', authMiddleware, userController.getCurrentUser); // Obtenir l'utilisateur connecté
+router.get("/user", authMiddleware, userController.getCurrentUser) // Obtenir l'utilisateur connecté
 
-router.get('/users', authMiddleware, userController.getAllUsers); // Obtenir tous les utilisateurs
-router.get('/users/:id', authMiddleware, userController.getUserById); // Obtenir un utilisateur par ID
-router.put('/users', authMiddleware, userController.updateUser); // Modifier son profil
-router.delete('/users', authMiddleware, userController.deleteUser); // Supprimer son compte
+router.get("/users", authMiddleware, userController.getAllUsers) // Obtenir tous les utilisateurs
+router.get("/users/:id", authMiddleware, userController.getUserById) // Obtenir un utilisateur par ID
+router.put("/users", authMiddleware, userController.updateUser) // Modifier son profil
+router.delete("/users", authMiddleware, userController.deleteUser) // Supprimer son compte
 
+router.get("/posts", authMiddleware, postController.getAllPosts) // Récupérer tous les posts
+router.get("/posts/:id", authMiddleware, postController.getPost) // Récupérer un post par ID
+router.post("/posts", authMiddleware, upload.single("img"), postController.createPost)
+router.delete("/posts/:id", authMiddleware, postController.deletePost) // Supprimer un post
+router.get("/posts/user/:id", authMiddleware, postController.getPostsByUserId) // Route pour récupérer les posts d'un utilisateur par son ID
 
-router.get('/posts',authMiddleware, postController.getAllPosts); // Récupérer tous les posts
-router.get('/posts/:id',authMiddleware, postController.getPost); // Récupérer un post par ID
-router.post("/posts", authMiddleware, upload.single("img"), postController.createPost);
-router.delete('/posts/:id', authMiddleware, postController.deletePost); // Supprimer un post
-router.get('/posts/user/:id',authMiddleware, postController.getPostsByUserId);// Route pour récupérer les posts d'un utilisateur par son ID
-
-router.post('/upload',authMiddleware, upload.single('image'), (req, res) => {
+router.post("/upload", authMiddleware, upload.single("image"), (req, res) => {
     if (!req.file) {
-        return res.status(400).send('Aucun fichier n\'a été téléchargé.');
+        return res.status(400).send("Aucun fichier n'a été téléchargé.")
     }
     // Retourne l'URL du fichier téléchargé
-    res.send({ url: `http://localhost:5000/uploads/${req.file.filename}` });
-});
+    res.send({ url: `http://localhost:5000/uploads/${req.file.filename}` })
+})
 
-module.exports = router;
+// Routes pour les notifications
+router.post("/notifications/subscribe", authMiddleware, notificationController.subscribe)
+router.post("/notifications/unsubscribe", authMiddleware, notificationController.unsubscribe)
+router.post("/notifications/send", authMiddleware, notificationController.sendNotification)
+
+// Subscription routes
+router.post("/subscriptions/subscribe", authMiddleware, subscriptionController.subscribe)
+router.post("/subscriptions/unsubscribe", authMiddleware, subscriptionController.unsubscribe)
+router.get("/subscriptions/check/:id", authMiddleware, subscriptionController.checkSubscription)
+
+module.exports = router
+

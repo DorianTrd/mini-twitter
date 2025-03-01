@@ -1,24 +1,17 @@
-const User = require('./user');
-const Post = require('./post');
-const sequelize = require("../config/db");
-const UserHasUser = require('./userHasUser');
+const User = require("./user")
+const Post = require("./post")
+const Notification = require("./notification")
+const Subscription = require("./subscription")
+const sequelize = require("../config/db")
 
-Post.belongsTo(User, { foreignKey: "userId", as: "author" });
-User.hasMany(Post, { foreignKey: "userId", as: "posts" });
+Post.belongsTo(User, { foreignKey: "userId", as: "author" })
+User.hasMany(Post, { foreignKey: "userId", as: "posts" })
 
+User.hasMany(Notification, { foreignKey: "userId", as: "Notification" })
+Notification.belongsTo(User, { foreignKey: "userId", as: "User" })
 
-User.belongsToMany(User, {
-    through: UserHasUser,
-    as: 'Followers',
-    foreignKey: 'followingId',
-    otherKey: 'followerId',
-});
+User.belongsToMany(User, { through: Subscription, as: "Subscribers", foreignKey: "subscribedToId" })
+User.belongsToMany(User, { through: Subscription, as: "Subscriptions", foreignKey: "subscriberId" })
 
-User.belongsToMany(User, {
-    through: UserHasUser,
-    as: 'Following',
-    foreignKey: 'followerId',
-    otherKey: 'followingId',
-});
+module.exports = { User, Post, Notification, Subscription, sequelize }
 
-module.exports = { User, Post ,UserHasUser, sequelize};

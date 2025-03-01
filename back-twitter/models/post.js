@@ -23,8 +23,8 @@ const Post = sequelize.define('Post', {
     userId: {
         type: DataTypes.INTEGER,
         references: {
-            model: User,  // Assurez-vous que User est correctement importé
-            key: 'id',    // Clé primaire du modèle User
+            model: User,
+            key: 'id',
         },
     },
 }, {
