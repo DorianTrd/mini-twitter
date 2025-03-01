@@ -5,7 +5,7 @@
 ### **1️⃣ Backend Setup**
 1. Se positionner au niveau du back:
    ```sh
-   cd back-tiwtter
+   cd back-twitter
    npm install
    ```
 2. **Variable d'Environment**:
